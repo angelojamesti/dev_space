@@ -31,7 +31,8 @@ while run == True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-    # ensures that the screen updates each time an event happens
+
+    # Ensures that the screen updates each time an event happens
     pygame.display.update()
 
 pygame.quit()
