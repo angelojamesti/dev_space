@@ -176,8 +176,8 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.sprite)
 
     # Function that hanldles drawing on the screen
-    def draw(self, win):
-        win.blit(self.sprite, (self.rect.x, self.rect.y))
+    def draw(self, win, offset_x):
+        win.blit(self.sprite, (self.rect.x - offset_x, self.rect.y))
 
 # Just a base class, not really going to instantiate this, but this defines all of the properties that we need for a valid sprite.
 # we have a rect, image, we are drawing the image.
@@ -190,8 +190,8 @@ class Object(pygame.sprite.Sprite):
         self.height = height
         self.name = name
 
-    def draw(self, win):
-        win.blit(self.image, (self.rect.x, self.rect.y))
+    def draw(self, win, offset_x):
+        win.blit(self.image, (self.rect.x - offset_x, self.rect.y))
 
 class Block(Object):
     def __init__(self, x, y, size):
@@ -221,14 +221,14 @@ def get_background(name):
     return tiles, image
 
 # This funtion draws stuff into the game window
-def draw(window, background, bg_image, player, objects):
+def draw(window, background, bg_image, player, objects, offset_x):
     # This draws the image into tiles for the background of the game window
     for tile in background:
         window.blit(bg_image, tile)
     for obj in objects:
-        obj.draw(window)
+        obj.draw(window, offset_x)
     # This draws the player into the game window    
-    player.draw(window)
+    player.draw(window, offset_x)
     # Updates the game window display (refresh) to remove previous drawings 
     pygame.display.update()
 
@@ -244,14 +244,28 @@ def handle_vertical_collision(player, objects, dy):
                 player.hit_head()
         collided_objects.append(obj)
 
+def collide(player, objects, dx):
+    player.move(dx, 0)
+    player.update()
+    collided_object = None
+    for obj in objects:
+        if pygame.sprite.collide_mask(player, obj):
+            collided_object = obj
+            break
+    player.move(-dx, 0)
+    player.update()
+    return collided_object
+
 def handle_move(player, objects):
     # gets all the keys that are pressed/still pressed
     keys = pygame.key.get_pressed()
     # This makes sure that the player will only move while holding down the key
     player.x_vel = 0
-    if keys[pygame.K_LEFT]:
+    collide_left = collide(player, objects, -PLAYER_VEL * 2)
+    collide_right = collide(player, objects, PLAYER_VEL * 2)
+    if keys[pygame.K_LEFT] and not collide_left:
         player.move_left(PLAYER_VEL)
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT] and not collide_right:
         player.move_right(PLAYER_VEL)
 
     handle_vertical_collision(player, objects, player.y_vel)
@@ -266,12 +280,14 @@ def main(window):
     # Declares the block size in pixels
     block_size = 96
     # Creates the player and sets it to
-    player = Player(100,100,50,50)
+    player = Player(100, 100, 50, 50)
     # Creates a floor object, Create blocks to the left and right of the screen
     # i * block_size = x coordinate of the block
     floor = [Block(i * block_size, HEIGHT - block_size, block_size)
              for i in range(-WIDTH // block_size, (WIDTH * 2) // block_size)]
-    blocks = [Block(0, HEIGHT - block_size, block_size)]
+    objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), Block(block_size * 3, HEIGHT - block_size * 4, block_size)]
+    offset_x =0
+    scroll_area_width = 200
 
     # sets the switch for the game instance
     run = True
@@ -293,11 +309,17 @@ def main(window):
                     player.jump()
 
         player.loop(FPS)
-        handle_move(player, floor)
-        draw(window, background, bg_image, player, floor)
+        handle_move(player, objects)
+        draw(window, background, bg_image, player, objects, offset_x)
+
+        # Checking if the player is moving to the right within the game window.
+        if ((player.rect.right - offset_x >= WIDTH - scroll_area_width and player.x_vel >0) or (
+                player.rect.left - offset_x <= scroll_area_width) and player.x_vel < 0):
+            offset_x += player.x_vel
+
     pygame.quit()
     quit()
 if __name__ == "__main__":
     main(window)
 
-# https://youtu.be/6gLeplbqtqg?t=4948
+# https://youtu.be/6gLeplbqtqg?t=5781
