@@ -90,6 +90,8 @@ class Player(pygame.sprite.Sprite):
         self.animation_count = 0
         self.fall_count = 0
         self.jump_count = 0
+        self.hit = False
+        self.hit_count = 0
 
     def jump(self):
         # By removing the gravity this allows the player to jump
@@ -101,6 +103,9 @@ class Player(pygame.sprite.Sprite):
         if self.jump_count == 1:
             self.fall_count = 0
         
+    def make_hit(self):
+        self.hit = True
+        self.hit_count = 0
 
     # Movement will take int displacement in the X and Y direction
     def move(self, dx, dy):
@@ -129,6 +134,13 @@ class Player(pygame.sprite.Sprite):
         # Basically fake gravity
         self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_vel, self.y_vel)
+
+        if self.hit:
+            self.hit_count += 1
+        if self.hit_count > fps * 2:
+            self.hit = False
+            self.hit_count = 0
+
         self.fall_count += 1
         self.update_sprite()
 
@@ -144,6 +156,8 @@ class Player(pygame.sprite.Sprite):
     # This function determines which sprite to load with every action
     def update_sprite(self):
         sprite_sheet = "idle"
+        if self.hit:
+            sprite_sheet = "hit"
         # -y_vel means the object is going up
         if self.y_vel < 0:
             if self.jump_count == 1:
@@ -201,6 +215,36 @@ class Block(Object):
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
+class Fire(Object):
+    ANIMATION_DELAY = 3
+
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "fire")
+        self.fire = load_sprite_sheets("Traps", "Fire", width, height)
+        self.image = self.fire["off"][0]
+        self.mask = pygame.mask.from_surface(self.image)
+        self.animation_count = 0
+        self.animation_name = "off"
+
+    def on(self):
+        self.animation_name = "on"
+    
+    def off(self):
+        self.animation_name = "off"
+
+    def loop(self):
+        sprites = self.fire[self.animation_name]
+        # Calculates the sprite index based on animation count, the animation delay and the length of the sprites list.
+        # Ex. (10 // 2) % 5 the sprite index will then choose the 6th frame from the sprites list
+        sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
+        self.image = sprites[sprite_index]
+        self.animation_count += 1
+
+        self.rect = self.image.get_rect(topleft=(self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
+
+        if self.animation_count // self.ANIMATION_DELAY > len(sprites):
+            self.animation_count = 0
 
 # Function calculates the number of tiles needed based on the heiht and width of the image
 def get_background(name):
@@ -242,7 +286,7 @@ def handle_vertical_collision(player, objects, dy):
             elif dy < 0:
                 player.rect.top = obj.rect.bottom
                 player.hit_head()
-        collided_objects.append(obj)
+            collided_objects.append(obj)
 
 def collide(player, objects, dx):
     player.move(dx, 0)
@@ -268,8 +312,11 @@ def handle_move(player, objects):
     if keys[pygame.K_RIGHT] and not collide_right:
         player.move_right(PLAYER_VEL)
 
-    handle_vertical_collision(player, objects, player.y_vel)
-
+    vertical_collide = handle_vertical_collision(player, objects, player.y_vel)
+    to_check = [collide_left, collide_right, vertical_collide]
+    for obj in to_check:
+        if obj and obj.name == "fire":
+            player.make_hit()
 
 # This function is the event loop which will be handling the collision, moving our character, redrawing the window and many more.
 def main(window):
@@ -281,11 +328,14 @@ def main(window):
     block_size = 96
     # Creates the player and sets it to
     player = Player(100, 100, 50, 50)
+    #
+    fire = Fire(100, HEIGHT - block_size - 64, 16, 32)
+    fire.on()
     # Creates a floor object, Create blocks to the left and right of the screen
     # i * block_size = x coordinate of the block
     floor = [Block(i * block_size, HEIGHT - block_size, block_size)
              for i in range(-WIDTH // block_size, (WIDTH * 2) // block_size)]
-    objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), Block(block_size * 3, HEIGHT - block_size * 4, block_size)]
+    objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), Block(block_size * 3, HEIGHT - block_size * 4, block_size), fire]
     offset_x =0
     scroll_area_width = 200
 
@@ -309,6 +359,7 @@ def main(window):
                     player.jump()
 
         player.loop(FPS)
+        fire.loop()
         handle_move(player, objects)
         draw(window, background, bg_image, player, objects, offset_x)
 
@@ -322,4 +373,4 @@ def main(window):
 if __name__ == "__main__":
     main(window)
 
-# https://youtu.be/6gLeplbqtqg?t=5781
+# https://youtu.be/6gLeplbqtqg?t=6316
