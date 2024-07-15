@@ -65,14 +65,15 @@ def get_block(size):
     image = pygame.image.load(path).convert_alpha()
     surface = pygame.Surface((size, size), pygame.SRCALPHA, 32)
     # 96, is the start of the pixel number from the image
-    rect = pygame.Rect(0, 0, size, size)
+    # Terrain.png is 352 x 176 h x w each sprite 
+    rect = pygame.Rect(96, 0, size, size)
     surface.blit(image, (0, 0), rect)
     return pygame.transform.scale2x(surface)
 
 # This class will allow us to have better collission handling
 class Player(pygame.sprite.Sprite):
     COLOR = (255, 0, 0)
-    GRAVITY = 1.5
+    GRAVITY = 1
     # Basically choose which sprite to load at what height and width and if it is directional (left or right)
     SPRITES = load_sprite_sheets("MainCharacters", "MaskDude", 32, 32, True)
     # The amount of time it takes before the sprite changes
@@ -323,25 +324,19 @@ def handle_move(player, objects):
 def main(window):
     # Setup the in-game clock
     clock = pygame.time.Clock()
-    # background = tiles, bg_image = image 
-    background, bg_image = get_background("Blue.png")
+    # Background = tiles, bg_image = image 
+    background, bg_image = get_background("Green.png")
     # Declares the block size in pixels
     block_size = 96
     # Creates the player and sets it to
     player = Player(100, 100, 50, 50)
-    #
+    # Create a function where you put in a list of grid coordinates and then returns a list for Blocks to put in a level
     terrain_blocks = [Block(0, HEIGHT - block_size * 2, block_size),
                       Block(block_size * 3, HEIGHT - block_size * 4, block_size), 
                       Block(block_size * 4, HEIGHT - block_size * 4, block_size),
                       Block(block_size * 5, HEIGHT - block_size * 4, block_size),
                       Block(block_size * 6, HEIGHT - block_size * 4, block_size),
-                      Block(block_size * 7, HEIGHT - block_size * 4, block_size),
-                      Block(block_size * 8, HEIGHT - block_size * 4, block_size),
-                      Block(block_size * 9, HEIGHT - block_size * 4, block_size),
-                      Block(block_size * 10, HEIGHT - block_size * 4, block_size),
-                      Block(block_size * 11, HEIGHT - block_size * 4, block_size),
-                      Block(block_size * 12, HEIGHT - block_size * 4, block_size),
-                      Block(block_size * 13, HEIGHT - block_size * 4, block_size)]
+                      Block(block_size * 5, HEIGHT - block_size * 7, block_size)]
     fire = Fire(100, HEIGHT - block_size - 64, 16, 32)
     fire.on()
 
