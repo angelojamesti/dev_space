@@ -309,13 +309,15 @@ def handle_move(player, objects):
     player.x_vel = 0
     collide_left = collide(player, objects, -PLAYER_VEL * 2)
     collide_right = collide(player, objects, PLAYER_VEL * 2)
-    if keys[pygame.K_LEFT] or keys[pygame.K_a] and not collide_left:
+
+    if keys[pygame.K_LEFT] and not collide_left:
         player.move_left(PLAYER_VEL)
-    if keys[pygame.K_RIGHT] or keys[pygame.K_d] and not collide_right:
+    if keys[pygame.K_RIGHT] and not collide_right:
         player.move_right(PLAYER_VEL)
 
     vertical_collide = handle_vertical_collision(player, objects, player.y_vel)
     to_check = [collide_left, collide_right, *vertical_collide]
+
     for obj in to_check:
         if obj and obj.name == "fire":
             player.make_hit()
@@ -329,8 +331,9 @@ def main(window):
     # Declares the block size in pixels
     block_size = 96
     # Creates the player and sets it to
-    player = Player(100, 100, 50, 50)
+    player = Player(50, 50, 50, 50)
     # Create a function where you put in a list of grid coordinates and then returns a list for Blocks to put in a level
+    # Levels givenm blocksize are 96px can be 9 blocks high, player max jump height is 2 blocks high and 4 wide.
     terrain_blocks = [Block(0, HEIGHT - block_size * 2, block_size),
                       Block(block_size * 3, HEIGHT - block_size * 4, block_size), 
                       Block(block_size * 4, HEIGHT - block_size * 4, block_size),
@@ -348,7 +351,6 @@ def main(window):
     offset_x = 0
     scroll_area_width = 200
 
-
     # sets the switch for the game instance
     run = True
     # while run is equal to True the game will continue to run
@@ -363,7 +365,6 @@ def main(window):
                 run = False
                 # Break out of the program
                 break
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and player.jump_count < 2:
                     player.jump()
