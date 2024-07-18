@@ -96,7 +96,7 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self):
         # By removing the gravity this allows the player to jump
-        self.y_vel = -self.GRAVITY * 8
+        self.y_vel = -self.GRAVITY * 9
         # resets the animation count
         self.animation_count = 0
         # Adds a jumpcount by 1
@@ -346,7 +346,7 @@ def main(window):
     # Creates a floor object, Create blocks to the left and right of the screen
     # i * block_size = x coordinate of the block
     floor = [Block(i * block_size, HEIGHT - block_size, block_size)
-             for i in range(-WIDTH // block_size, (WIDTH * 2) // block_size)]
+             for i in range(-WIDTH // block_size, (WIDTH * 4) // block_size)]
     objects = [*floor, fire, *terrain_blocks]
     offset_x = 0
     scroll_area_width = 200
