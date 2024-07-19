@@ -60,13 +60,21 @@ def load_sprite_sheets(dir1, dir2, width, height, direction=False):
 
 def get_block(size):
     path = join("assets", "Terrain", "Terrain.png" )
-    # https://youtu.be/6gLeplbqtqg?t=3711
     # Retrieves the sprite of the block based on the path above
     image = pygame.image.load(path).convert_alpha()
     surface = pygame.Surface((size, size), pygame.SRCALPHA, 32)
     # 96, is the start of the pixel number from the image
-    # Terrain.png is 352 x 176 h x w each sprite 
+    # Terrain.png is 352 x 176 w x h each sprite 
     rect = pygame.Rect(96, 0, size, size)
+    surface.blit(image, (0, 0), rect)
+    return pygame.transform.scale2x(surface)
+
+def get_spike(height, width):
+    path = join("assets", "Traps", "Spikes", "Idle.png" )
+    # Retrieves the sprite of the spike based on the path above
+    image = pygame.image.load(path).convert_alpha()
+    surface = pygame.Surface((height, width), pygame.SRCALPHA, 32)
+    rect = pygame.Rect(8, 8, height, width)
     surface.blit(image, (0, 0), rect)
     return pygame.transform.scale2x(surface)
 
@@ -96,7 +104,7 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self):
         # By removing the gravity this allows the player to jump
-        self.y_vel = -self.GRAVITY * 9
+        self.y_vel = -self.GRAVITY * 10
         # resets the animation count
         self.animation_count = 0
         # Adds a jumpcount by 1
@@ -141,7 +149,6 @@ class Player(pygame.sprite.Sprite):
         if self.hit_count > fps * 2:
             self.hit = False
             self.hit_count = 0
-
         self.fall_count += 1
         self.update_sprite()
 
@@ -216,6 +223,13 @@ class Block(Object):
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
+class Spike(Object):
+    def __init__(self, x, y, height, width):
+        super().__init__(x, y, height, width)
+        spike = get_spike(height, width)
+        self.image.blit(spike, (0,0))
+        self.mask = pygame.mask.from_surface(self.image)
+
 class Fire(Object):
     ANIMATION_DELAY = 3
 
@@ -285,7 +299,7 @@ def handle_vertical_collision(player, objects, dy):
                 player.rect.bottom = obj.rect.top
                 player.landed()
             elif dy < 0:
-                player.rect.top = obj.rect.bottom
+                player.rect.top = obj.rect.bottom + 1
                 player.hit_head()
             collided_objects.append(obj)
     return collided_objects
@@ -307,12 +321,12 @@ def handle_move(player, objects):
     keys = pygame.key.get_pressed()
     # This makes sure that the player will only move while holding down the key
     player.x_vel = 0
-    collide_left = collide(player, objects, -PLAYER_VEL * 2)
-    collide_right = collide(player, objects, PLAYER_VEL * 2)
+    collide_left = collide(player, objects, -PLAYER_VEL * 3)
+    collide_right = collide(player, objects, PLAYER_VEL * 3)
 
-    if keys[pygame.K_LEFT] and not collide_left:
+    if keys[pygame.K_LEFT] and not collide_left or keys[pygame.K_a] and not collide_left:
         player.move_left(PLAYER_VEL)
-    if keys[pygame.K_RIGHT] and not collide_right:
+    if keys[pygame.K_RIGHT] and not collide_right or keys[pygame.K_d] and not collide_right:
         player.move_right(PLAYER_VEL)
 
     vertical_collide = handle_vertical_collision(player, objects, player.y_vel)
@@ -340,14 +354,15 @@ def main(window):
                       Block(block_size * 5, HEIGHT - block_size * 4, block_size),
                       Block(block_size * 6, HEIGHT - block_size * 4, block_size),
                       Block(block_size * 5, HEIGHT - block_size * 7, block_size)]
-    fire = Fire(100, HEIGHT - block_size - 64, 16, 32)
+    spike = Spike(300, HEIGHT - block_size - 16, 16, 16)
+    fire = Fire(150, HEIGHT - block_size - 64, 16, 32)
     fire.on()
 
     # Creates a floor object, Create blocks to the left and right of the screen
     # i * block_size = x coordinate of the block
     floor = [Block(i * block_size, HEIGHT - block_size, block_size)
              for i in range(-WIDTH // block_size, (WIDTH * 4) // block_size)]
-    objects = [*floor, fire, *terrain_blocks]
+    objects = [*floor, fire, *terrain_blocks, spike]
     offset_x = 0
     scroll_area_width = 200
 
