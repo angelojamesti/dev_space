@@ -261,6 +261,36 @@ class Fire(Object):
         if self.animation_count // self.ANIMATION_DELAY > len(sprites):
             self.animation_count = 0
 
+class Fan(Object):
+    ANIMATION_DELAY = 3
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "fan")
+        self.fan = load_sprite_sheets("Traps", "Fan", width, height)
+        self.image = self.fan["Off"][0]
+        self.mask = pygame.mask.from_surface(self.image)
+        self.animation_count = 0
+        self.animation_name = "Off"
+
+    def on(self):
+            self.animation_name = "On"
+    
+    def off(self):
+            self.animation_name = "Off"
+
+    def loop(self):
+        sprites = self.fan[self.animation_name]
+        # Calculates the sprite index based on animation count, the animation delay and the length of the sprites list.
+        # Ex. (10 // 2) % 5 the sprite index will then choose the 6th frame from the sprites list
+        sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
+        self.image = sprites[sprite_index]
+        self.animation_count += 1
+
+        self.rect = self.image.get_rect(topleft=(self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.image)
+
+        if self.animation_count // self.ANIMATION_DELAY > len(sprites):
+            self.animation_count = 0        
+
 # Function calculates the number of tiles needed based on the heiht and width of the image
 def get_background(name):
     # grabs the file from the Background folder within assets and loads it into 'image' variable
@@ -354,15 +384,23 @@ def main(window):
                       Block(block_size * 5, HEIGHT - block_size * 4, block_size),
                       Block(block_size * 6, HEIGHT - block_size * 4, block_size),
                       Block(block_size * 5, HEIGHT - block_size * 7, block_size)]
-    spike = Spike(300, HEIGHT - block_size - 16, 16, 16)
+    spikes = [Spike(300, HEIGHT - block_size - 16, 16, 16),
+              Spike(316, HEIGHT - block_size - 16, 16, 16),
+              Spike(332, HEIGHT - block_size - 16, 16, 16),
+              Spike(348, HEIGHT - block_size - 16, 16, 16),
+              Spike(364, HEIGHT - block_size - 16, 16, 16),
+              Spike(380, HEIGHT - block_size - 16, 16, 16),
+              Spike(406, HEIGHT - block_size - 16, 16, 16),
+              Spike(422, HEIGHT - block_size - 16, 16, 16)]
     fire = Fire(150, HEIGHT - block_size - 64, 16, 32)
+    fan = Fan(450, HEIGHT - block_size - 16, 24, 8)
     fire.on()
-
+    fan.on()
     # Creates a floor object, Create blocks to the left and right of the screen
     # i * block_size = x coordinate of the block
     floor = [Block(i * block_size, HEIGHT - block_size, block_size)
              for i in range(-WIDTH // block_size, (WIDTH * 4) // block_size)]
-    objects = [*floor, fire, *terrain_blocks, spike]
+    objects = [*floor, fire, *terrain_blocks, *spikes, fan]
     offset_x = 0
     scroll_area_width = 200
 
@@ -386,6 +424,7 @@ def main(window):
 
         player.loop(FPS)
         fire.loop()
+        fan.loop()
         handle_move(player, objects)
         draw(window, background, bg_image, player, objects, offset_x)
 
