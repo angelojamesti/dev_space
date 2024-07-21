@@ -143,7 +143,6 @@ class Player(pygame.sprite.Sprite):
         # Basically fake gravity
         self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_vel, self.y_vel)
-
         if self.hit:
             self.hit_count += 1
         if self.hit_count > fps * 2:
@@ -365,6 +364,10 @@ def handle_move(player, objects):
     for obj in to_check:
         if obj and obj.name == "fire":
             player.make_hit()
+        elif obj and obj.name == "spike":
+            player.make_hit()            
+        elif obj and obj.name == "fan":
+            player.make_hit()
 
 # This function is the event loop which will be handling the collision, moving our character, redrawing the window and many more.
 def main(window):
@@ -390,17 +393,22 @@ def main(window):
               Spike(348, HEIGHT - block_size - 16, 16, 16),
               Spike(364, HEIGHT - block_size - 16, 16, 16),
               Spike(380, HEIGHT - block_size - 16, 16, 16),
-              Spike(406, HEIGHT - block_size - 16, 16, 16),
-              Spike(422, HEIGHT - block_size - 16, 16, 16)]
-    fire = Fire(150, HEIGHT - block_size - 64, 16, 32)
+              Spike(396, HEIGHT - block_size - 16, 16, 16),
+              Spike(412, HEIGHT - block_size - 16, 16, 16)]
+    firepit = [Fire(150, HEIGHT - block_size - 64, 16, 32),
+               Fire(182, HEIGHT - block_size - 64, 16, 32),
+               Fire(214, HEIGHT - block_size - 64, 16, 32),
+               Fire(246, HEIGHT - block_size - 64, 16, 32),
+               Fire(278, HEIGHT - block_size - 64, 16, 32)]
+    for fire in firepit:
+        fire.on()
     fan = Fan(450, HEIGHT - block_size - 16, 24, 8)
-    fire.on()
     fan.on()
     # Creates a floor object, Create blocks to the left and right of the screen
     # i * block_size = x coordinate of the block
     floor = [Block(i * block_size, HEIGHT - block_size, block_size)
              for i in range(-WIDTH // block_size, (WIDTH * 4) // block_size)]
-    objects = [*floor, fire, *terrain_blocks, *spikes, fan]
+    objects = [*floor, *firepit, *terrain_blocks, *spikes, fan]
     offset_x = 0
     scroll_area_width = 200
 
@@ -421,9 +429,9 @@ def main(window):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and player.jump_count < 2:
                     player.jump()
-
         player.loop(FPS)
-        fire.loop()
+        for fire in firepit:
+            fire.loop()
         fan.loop()
         handle_move(player, objects)
         draw(window, background, bg_image, player, objects, offset_x)
