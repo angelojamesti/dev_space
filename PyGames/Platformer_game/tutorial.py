@@ -81,7 +81,7 @@ def get_spike(height, width):
 # This class will allow us to have better collission handling
 class Player(pygame.sprite.Sprite):
     COLOR = (255, 0, 0)
-    GRAVITY = 1.2
+    GRAVITY = 1
     # Basically choose which sprite to load at what height and width and if it is directional (left or right)
     SPRITES = load_sprite_sheets("MainCharacters", "PinkMan", 32, 32, True)
     # The amount of time it takes before the sprite changes
@@ -104,7 +104,7 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self):
         # By removing the gravity this allows the player to jump
-        self.y_vel = -self.GRAVITY * 9.8
+        self.y_vel = -self.GRAVITY * 9
         # resets the animation count
         self.animation_count = 0
         # Adds a jumpcount by 1
@@ -291,7 +291,8 @@ class Fan(Object):
             self.animation_count = 0        
 
 class Trampoline(Object):
-    ANIMATION_DELAY = 3
+    # Higher means the animation is slower
+    ANIMATION_DELAY = 6
 
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height, "trampoline")
