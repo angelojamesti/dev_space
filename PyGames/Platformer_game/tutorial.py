@@ -83,7 +83,7 @@ class Player(pygame.sprite.Sprite):
     COLOR = (255, 0, 0)
     GRAVITY = 1
     # Basically choose which sprite to load at what height and width and if it is directional (left or right)
-    SPRITES = load_sprite_sheets("MainCharacters", "PinkMan", 32, 32, True)
+    SPRITES = load_sprite_sheets("MainCharacters", "VirtualGuy", 32, 32, True)
     # The amount of time it takes before the sprite changes
     ANIMATION_DELAY = 3
     # The position, width and height of the image will be stored into a Tuple
